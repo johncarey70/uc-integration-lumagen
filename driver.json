@@ -15,5 +15,32 @@
   },
   "home_page": "https://www.unfoldedcircle.com",
   "release_date": "2025-04-01",
-  "setup_data_schema": {}
+  "setup_data_schema": {
+    "title": {
+      "en": "Configuration"
+    },
+    "settings": [
+      {
+        "id": "note",
+        "label": {
+          "en": "Notes"
+        },
+        "field": { "label": { "value": {
+            "en": "By clicking on next an attempt is made to automatically find the Global Caché iTach IP2SL device connected to the Lumagen in your local network.\nIf you have changed any default ports or are using a different device you need to activate the manual setup."
+            } }
+        }
+      },
+      {  
+        "id": "manual",
+        "label": {
+          "en": "Manual Setup"
+        },
+        "field": {
+          "checkbox": {
+            "value": false
+            }
+        }
+      }
+    ]
+  }
 }

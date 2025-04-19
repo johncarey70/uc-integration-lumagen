@@ -19,12 +19,10 @@ if ! docker system info > /dev/null 2>&1; then
     echo "  1. Automatic login is enabled for your user."
     echo "  2. Docker Desktop is set to launch on login."
     echo "  3. You are logged into the GUI after reboot."
-    #exit 1
   fi
 
   echo "Your user has an active console session, but Docker may not have launched."
   echo "Start Docker Desktop manually or reboot with login auto-start enabled."
-  #exit 1
 fi
 
 # Auto-detect integration directory
@@ -45,6 +43,12 @@ echo "Working in local temp dir: $TMPDIR"
 # Copy necessary files only
 cp -R "$INTG_DIR" "$TMPDIR/"
 cp driver.json requirements.txt "$TMPDIR/"
+WHEEL_FILE=$(ls pylumagen-*.whl 2>/dev/null | head -n 1 || true)
+if [[ -z "$WHEEL_FILE" ]]; then
+  echo "Error: pylumagen wheel file not found."
+  exit 1
+fi
+cp "$WHEEL_FILE" "$TMPDIR/"
 
 pushd "$TMPDIR" > /dev/null
 
@@ -54,6 +58,7 @@ docker run --rm --name builder \
   -v "$TMPDIR":/workspace \
   docker.io/unfoldedcircle/r2-pyinstaller:3.11.6-0.2.0 \
   bash -c "cd /workspace && \
+    python -m pip install $WHEEL_FILE && \
     python -m pip install -q --disable-pip-version-check -r requirements.txt && \
     pyinstaller --clean --onedir --name $INTG_DIR $INTG_DIR/driver.py"
 
