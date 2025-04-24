@@ -1,0 +1,46 @@
+{
+  "driver_id": "lumagen",
+  "version": "0.0.1",
+  "min_core_api": "0.20.0",
+  "name": { "en": "Lumagen Radiance Pro" },
+  "icon": "uc:integration",
+  "description": {
+    "en": "Integration to control a Lumagen Radiance Pro connected via IP2SL."
+  },
+  "port": 9084,
+  "developer": {
+    "name": "Unfolded Circle ApS",
+    "email": "hello@unfoldedcircle.com",
+    "url": "https://www.unfoldedcircle.com"
+  },
+  "home_page": "https://www.unfoldedcircle.com",
+  "release_date": "2025-04-01",
+  "setup_data_schema": {
+    "title": {
+      "en": "Configuration"
+    },
+    "settings": [
+      {
+        "id": "note",
+        "label": {
+          "en": "Notes"
+        },
+        "field": { "label": { "value": {
+            "en": "By clicking on next an attempt is made to automatically find the Global Caché iTach IP2SL device connected to the Lumagen in your local network.\nIf you have changed any default ports or are using a different device you need to activate the manual setup."
+            } }
+        }
+      },
+      {  
+        "id": "manual",
+        "label": {
+          "en": "Manual Setup"
+        },
+        "field": {
+          "checkbox": {
+            "value": false
+            }
+        }
+      }
+    ]
+  }
+}
