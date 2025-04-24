@@ -1,7 +1,7 @@
 """
 Registry for active LumagenDevice instances.
 
-Used to store and retrieve device connections by device ID without causing import cycles.
+Used to store and retrieve device connections by device ID.
 """
 
 from typing import Dict, Iterator

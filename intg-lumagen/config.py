@@ -1,15 +1,17 @@
 """
-Defines media player setup components and device configuration management.
+Handles device configuration management and entity-to-device mapping utilities.
 
-This module includes:
-- _EnhancedJSONEncoder: JSON encoder for dataclass objects
-- Devices: manager class supporting
-    - Adding/removing/updating devices (with optional handlers)
-    - File-based persistence with automatic save
-    - Lookup via get(), contains()
-    - Read-only access to current device list
-    - Configurable config file path
-    - Logging for traceability
+Features:
+- `_EnhancedJSONEncoder`: Custom JSON encoder for serializing dataclass instances.
+- `Devices`: Manager class for:
+    - Adding, removing, and updating device entries.
+    - Persistent file-backed storage with automatic saves.
+    - Configurable storage path for device configs.
+    - Device lookup, containment checks, and iteration support.
+    - Logging for operational visibility.
+- `extract_device_id()`: Utility to extract device ID from an entity object.
+
+This module supports Lumagen device integration in UC API-based environments.
 """
 
 

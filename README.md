@@ -31,6 +31,20 @@ Supported **remote** UI:
 
 - If you want to try this, install via upload uc-intg-lumagen-aarch64.tar.gz in Integrations.
 
+
+### Lumagen Device Configuration Prerequisites
+
+Before using this integration, the following settings must be applied directly on your Lumagen Radiance Pro device:
+
+1. Navigate to: `MENU → Other → I/O Setup → RS-232 Setup`
+2. Apply these settings:
+   - **Echo**: On  
+   - **Delimiters**: On  
+   - **Report mode changes**: Fullv4
+3. Be sure to **Save** your settings on the device.
+
+These settings ensure the Lumagen device correctly echoes commands, formats responses, and reports state changes in a compatible way.
+
 ## License
 
 Licensed under the [**Mozilla Public License 2.0**](https://choosealicense.com/licenses/mpl-2.0/).  

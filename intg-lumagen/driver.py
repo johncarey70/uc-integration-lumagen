@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Lumagen integration driver."""
+"""Lumagen Remote Two/3 Integration Driver."""
 
 import logging
 from typing import Any

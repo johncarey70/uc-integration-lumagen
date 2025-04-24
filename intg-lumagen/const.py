@@ -1,4 +1,14 @@
-"""Constants."""
+"""
+Defines constant enumerations used for Lumagen remote and media player control.
+
+Includes:
+- `SimpleCommands`: Enum mapping human-readable command names to Lumagen-specific remote commands.
+  Covers numeric inputs, aspect ratio changes, navigation, power control, and more.
+- Designed for use with `ucapi`-based entity integration modules (e.g., remote, media_player).
+
+These constants provide a unified interface for issuing commands across UC integrations.
+"""
+
 
 from enum import Enum
 
