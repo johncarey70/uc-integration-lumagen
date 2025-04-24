@@ -1,4 +1,4 @@
-# Lumagen Radiance Pro Integration for Remote Two/3
+# Lumagen Radiance Pro Integration for Unfolded Circle Remote Two/3
 
 **Disclaimer**: Use at your own risk. This integration is currently **untested** and in active development. It has not yet been verified with real hardware still awaiting delivery of the R3 Remote.
 
