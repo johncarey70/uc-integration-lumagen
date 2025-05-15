@@ -162,7 +162,9 @@ class LumagenRemote(Remote):
                 try:
                     # Match strictly by Enum name (case-sensitive)
                     simple_cmd = raw if isinstance(raw, cmds) else resolve_simple_command(raw)
+                    _LOG.debug("Simple Command = %s", simple_cmd)
                     method_name = simple_cmd.value
+                    _LOG.debug("Method Name = %s", method_name)
                 except KeyError:
                     _LOG.warning("Invalid command name: %s", raw)
                     return StatusCodes.NOT_FOUND
@@ -181,7 +183,6 @@ class LumagenRemote(Remote):
                 else:
                     _LOG.warning("No executor method found for command: %s", method_name)
                     return StatusCodes.NOT_IMPLEMENTED
-
 
         return StatusCodes.OK
 
