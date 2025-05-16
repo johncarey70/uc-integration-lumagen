@@ -229,14 +229,14 @@ async def on_lumagen_update(device_id: str, update: dict[str, Any] | None) -> No
             api.configured_entities.update_attributes(entity_id, changed_attrs)
 
 
-def on_device_added(device: config.LumagenInfo) -> None:
+def on_device_added(device: LumagenInfo) -> None:
     """Handle a newly added device in the configuration."""
     _LOG.debug("New Lumagen device added: %s", device)
     loop.create_task(api.set_device_state(ucapi.DeviceStates.CONNECTED))
     _configure_new_lumagen(device, connect=False)
 
 
-def on_device_removed(device: config.LumagenInfo | None) -> None:
+def on_device_removed(device: LumagenInfo | None) -> None:
     """Handle removal of a Lumagen device from config."""
     if device is None:
         _LOG.info("All devices cleared from config.")
