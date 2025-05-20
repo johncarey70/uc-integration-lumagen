@@ -138,53 +138,62 @@ class LumagenRemote(Remote):
         :return: Status code indicating the result of the command execution
         """
         if params is None:
-            _LOG.info("Received command request: %s - no parameters", cmd_id)
+            _LOG.info("Received Remote command request: %s - no parameters", cmd_id)
             params = {}
         else:
-            _LOG.info("Received command request: %s with parameters: %s", cmd_id, params)
+            _LOG.info("Received Remote command request: %s with parameters: %s", cmd_id, params)
 
-        match cmd_id:
-            case remote.Commands.ON:
-                await self._device.power_on()
+        status = StatusCodes.BAD_REQUEST  # Default fallback
 
-            case remote.Commands.OFF:
-                await self._device.power_off()
+        try:
+            cmd = Commands(cmd_id)
+        except ValueError:
+            return StatusCodes.NOT_IMPLEMENTED
 
-            case remote.Commands.TOGGLE:
-                await self._device.power_toggle()
+        match cmd:
+            case Commands.ON:
+                status = await self._device.power_on()
 
-            case remote.Commands.SEND_CMD:
+            case Commands.OFF:
+                status = await self._device.power_off()
+
+            case Commands.TOGGLE:
+                status = await self._device.power_toggle()
+
+            case Commands.SEND_CMD:
                 raw = params.get("command")
-                if not raw:
+                if raw is None:
                     _LOG.warning("Missing command in SEND_CMD")
-                    return StatusCodes.BAD_REQUEST
-
-                try:
-                    # Match strictly by Enum name (case-sensitive)
-                    simple_cmd = raw if isinstance(raw, cmds) else resolve_simple_command(raw)
-                    _LOG.debug("Simple Command = %s", simple_cmd)
-                    method_name = simple_cmd.value
-                    _LOG.debug("Method Name = %s", method_name)
-                except KeyError:
-                    _LOG.warning("Invalid command name: %s", raw)
-                    return StatusCodes.NOT_FOUND
-
-                executor_method = getattr(self._device.device.executor, method_name, None)
-
-                if callable(executor_method):
-                    try:
-                        result = executor_method()
-                        if asyncio.iscoroutine(result):
-                            await result
-                        _LOG.debug("Executed command: %s via executor", method_name)
-                    except Exception as e:
-                        _LOG.error("Error executing command %s: %s", method_name, e)
-                        return StatusCodes.BAD_REQUEST
+                    status = StatusCodes.BAD_REQUEST
                 else:
-                    _LOG.warning("No executor method found for command: %s", method_name)
-                    return StatusCodes.NOT_IMPLEMENTED
+                    try:
+                        # Match strictly by Enum name (case-sensitive)
+                        simple_cmd = raw if isinstance(raw, cmds) else resolve_simple_command(raw)
+                        _LOG.debug("Simple Command = %s", simple_cmd)
+                        method_name = simple_cmd.value
+                        _LOG.debug("Method Name = %s", method_name)
+                    except KeyError:
+                        _LOG.warning("Invalid command name: %s", raw)
+                        return StatusCodes.NOT_FOUND
+                    else:
+                        executor_method = getattr(self._device.device.executor, method_name, None)
 
-        return StatusCodes.OK
+                        if callable(executor_method):
+                            try:
+                                result = executor_method()
+                                if asyncio.iscoroutine(result):
+                                    await result
+                                _LOG.debug("Executed command: %s via executor", method_name)
+                            except Exception as e:
+                                _LOG.error("Error executing command %s: %s", method_name, e)
+                                status = StatusCodes.BAD_REQUEST
+                        else:
+                            _LOG.warning("No executor method found for command: %s", method_name)
+                            status = StatusCodes.NOT_IMPLEMENTED
+            case _:
+                status = StatusCodes.NOT_IMPLEMENTED
+            
+        return status
 
 
     def filter_changed_attributes(self, update: dict[str, Any]) -> dict[str, Any]:

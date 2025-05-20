@@ -53,7 +53,12 @@ class LumagenMediaPlayer(MediaPlayer):
         """
         _LOG.info("Got %s command request: %s %s", self.id, cmd_id, params)
 
-        match cmd_id:
+        try:
+            cmd = Commands(cmd_id)
+        except ValueError:
+            return StatusCodes.NOT_IMPLEMENTED
+
+        match cmd:
             case Commands.ON:
                 res = await self._device.power_on()
             case Commands.OFF:
