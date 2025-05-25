@@ -40,7 +40,7 @@ class LumagenRemote(Remote):
         attributes = RemoteDef.attributes
         super().__init__(
             entity_id,
-            info.name,
+            f"Intg-{info.name}",
             features,
             attributes,
             simple_commands=RemoteDef.simple_commands,
@@ -71,7 +71,7 @@ class LumagenRemote(Remote):
         """Create a user interface with different pages that includes all commands"""
 
         ui_page1 = UiPage("page1", "Power & Input", grid=Size(6, 6))
-        ui_page1.add(create_ui_text("Power On", 2, 0, size=Size(6, 1), cmd=Commands.ON))
+        ui_page1.add(create_ui_text("Power On", 2, 0, size=Size(6, 1), cmd=send_cmd(Commands.ON)))
         ui_page1.add(create_ui_text("1", 0, 1, size=Size(2, 1), cmd=send_cmd(cmds.NUM_1)))
         ui_page1.add(create_ui_text("2", 2, 1, size=Size(2, 1), cmd=send_cmd(cmds.NUM_2)))
         ui_page1.add(create_ui_text("3", 4, 1, size=Size(2, 1), cmd=send_cmd(cmds.NUM_3)))
@@ -131,68 +131,60 @@ class LumagenRemote(Remote):
 
     async def command(self, cmd_id: str, params: dict[str, Any] | None = None) -> StatusCodes:
         """
-        Handle command requests from the integration API for the media-player entity.
-
-        :param cmd_id: Command identifier (e.g., "ON", "OFF", "TOGGLE", "SEND_CMD")
-        :param params: Optional dictionary of parameters associated with the command
-        :return: Status code indicating the result of the command execution
+        Handle command requests from the integration API for the remote entity.
         """
-        if params is None:
-            _LOG.info("Received Remote command request: %s - no parameters", cmd_id)
-            params = {}
-        else:
+        params = params or {}
+        if params:
             _LOG.info("Received Remote command request: %s with parameters: %s", cmd_id, params)
+        else:
+            _LOG.info("Received Remote command request: %s - no parameters", cmd_id)
 
         status = StatusCodes.BAD_REQUEST  # Default fallback
 
         try:
             cmd = Commands(cmd_id)
         except ValueError:
-            return StatusCodes.NOT_IMPLEMENTED
+            status = StatusCodes.NOT_IMPLEMENTED
+        else:
+            match cmd:
+                case Commands.ON:
+                    status = await self._device.power_on()
 
-        match cmd:
-            case Commands.ON:
-                status = await self._device.power_on()
+                case Commands.OFF:
+                    status = await self._device.power_off()
 
-            case Commands.OFF:
-                status = await self._device.power_off()
+                case Commands.TOGGLE:
+                    status = await self._device.power_toggle()
 
-            case Commands.TOGGLE:
-                status = await self._device.power_toggle()
+                case Commands.SEND_CMD:
+                    simple_cmd = params.get("command")
 
-            case Commands.SEND_CMD:
-                raw = params.get("command")
-                if raw is None:
-                    _LOG.warning("Missing command in SEND_CMD")
-                    status = StatusCodes.BAD_REQUEST
-                else:
-                    try:
-                        # Match strictly by Enum name (case-sensitive)
-                        simple_cmd = raw if isinstance(raw, cmds) else resolve_simple_command(raw)
-                        _LOG.debug("Simple Command = %s", simple_cmd)
-                        method_name = simple_cmd.value
-                        _LOG.debug("Method Name = %s", method_name)
-                    except KeyError:
-                        _LOG.warning("Invalid command name: %s", raw)
-                        return StatusCodes.NOT_FOUND
+                    if not simple_cmd:
+                        _LOG.warning("Missing command in SEND_CMD")
+                        status = StatusCodes.BAD_REQUEST
+                    elif simple_cmd not in cmds._value2member_map_:
+                        _LOG.warning("Unknown command: %s", simple_cmd)
+                        status = StatusCodes.NOT_IMPLEMENTED
                     else:
-                        executor_method = getattr(self._device.device.executor, method_name, None)
+                        try:
+                            _LOG.debug("SimpleCommand = %s", simple_cmd)
+                            executor_method = getattr(self._device.device.executor, simple_cmd, None)
 
-                        if callable(executor_method):
-                            try:
+                            if not callable(executor_method):
+                                _LOG.warning("No executor method found for command: %s", simple_cmd)
+                                status = StatusCodes.NOT_IMPLEMENTED
+                            else:
                                 result = executor_method()
                                 if asyncio.iscoroutine(result):
                                     await result
-                                _LOG.debug("Executed command: %s via executor", method_name)
-                            except Exception as e:
-                                _LOG.error("Error executing command %s: %s", method_name, e)
-                                status = StatusCodes.BAD_REQUEST
-                        else:
-                            _LOG.warning("No executor method found for command: %s", method_name)
-                            status = StatusCodes.NOT_IMPLEMENTED
-            case _:
-                status = StatusCodes.NOT_IMPLEMENTED
-            
+                                _LOG.debug("Executed command: %s via executor", simple_cmd)
+                                status = StatusCodes.OK
+                        except (ValueError, KeyError, AttributeError, TypeError) as e:
+                            _LOG.error("Error executing command %s: %s", simple_cmd, e)
+                            status = StatusCodes.BAD_REQUEST
+                case _:
+                    status = StatusCodes.NOT_IMPLEMENTED
+
         return status
 
 
@@ -203,19 +195,20 @@ class LumagenRemote(Remote):
         :param update: dictionary with MediaAttributes.
         :return: dictionary with changed remote.Attributes only.
         """
-        attributes = {}
+        if MediaAttributes.STATE not in update:
+            return {}
 
-        if MediaAttributes.STATE in update:
-            media_state = update[MediaAttributes.STATE]
+        media_state = update[MediaAttributes.STATE]
+        new_state = REMOTE_STATE_MAPPING.get(media_state, States.UNKNOWN)
 
-            new_state: States = REMOTE_STATE_MAPPING.get(media_state, States.UNKNOWN)
+        if Attributes.STATE not in self.attributes or self.attributes[Attributes.STATE] != new_state:
+            result = {Attributes.STATE: new_state}
+        else:
+            result = {}
 
-            # Check if the state has changed from the current remote state
-            if Attributes.STATE not in self.attributes or self.attributes[Attributes.STATE] != new_state:
-                attributes[Attributes.STATE] = new_state
-
-        _LOG.debug("LumagenRemote update attributes %s -> %s", update, attributes)
-        return attributes
+        _LOG.debug("Remote state changed from %s to %s based on media update %s",
+                self.attributes.get(Attributes.STATE), new_state, update)
+        return result
 
 def send_cmd(command: cmds):
     """
@@ -225,14 +218,3 @@ def send_cmd(command: cmds):
     :return: A dictionary payload compatible with remote.create_send_cmd().
     """
     return remote.create_send_cmd(command.value)
-
-def resolve_simple_command(raw: str) -> cmds:
-    """
-    Resolves a raw command input like '1', 'EXIT', '1.85', '4x3' to a valid SimpleCommands enum.
-
-    This looks up display_name matches against known enum members.
-    """
-    for cmd in cmds:
-        if cmd.display_name == raw:
-            return cmd
-    raise KeyError(f"Invalid command: {raw}")

@@ -32,7 +32,7 @@ class LumagenMediaPlayer(MediaPlayer):
         }
         super().__init__(
             entity_id,
-            mp_info.name,
+            f"Intg-{mp_info.name}",
             features,
             attributes,
             device_class=DeviceClasses.RECEIVER,
