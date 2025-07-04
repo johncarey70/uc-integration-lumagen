@@ -29,10 +29,11 @@ def setup_logger():
     logging.getLogger("config").setLevel(level)
     logging.getLogger("discover").setLevel(level)
     logging.getLogger("setup_flow").setLevel(level)
-    logging.getLogger("lumagen").setLevel(level)
-    logging.getLogger("remote").setLevel(level)
-    logging.getLogger("media_player").setLevel(level)
-    #logging.getLogger("pylumagen").setLevel(level)
+    logging.getLogger("device").setLevel(level)
+    #logging.getLogger("remote").setLevel(level)
+    #logging.getLogger("media_player").setLevel(level)
+    #logging.getLogger("sensor").setLevel(level)
+    logging.getLogger("pylumagen").setLevel(level)
 
 
 
@@ -62,7 +63,7 @@ def validate_simple_commands_exist_on_executor(
             missing.append(method_name)
 
     if missing:
-        logger.warning(
+        logger.info(
             "Executor missing methods for SimpleCommands: %s", ", ".join(missing)
         )
     else:

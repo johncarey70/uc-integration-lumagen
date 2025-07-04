@@ -15,20 +15,35 @@ from enum import Enum
 from ucapi import media_player, remote
 
 
+class EntityPrefix(str, Enum):
+    """Enumeration of Sensors."""
+
+    MEDIA_PLAYER = "media_player"
+    REMOTE = "remote"
+    CURRENT_SOURCE_CONTENT_ASPECT = "current_source_content_aspect"
+    DETECTED_SOURCE_ASPECT = "detected_source_aspect"
+    INPUT_FORMAT = "input_format"
+    INPUT_MODE = "input_mode"
+    INPUT_RATE = "input_rate"
+    OUTPUT_FORMAT = "output_format"
+    OUTPUT_MODE = "output_mode"
+    OUTPUT_RATE = "output_rate"
+    PHYSICAL_INPUT_SELECTED = "physical_input_selected"
+
 class SimpleCommands(str, Enum):
     """Enumeration of supported remote command names for Lumagen control."""
 
-    NUM_0 = "send_0"
-    NUM_1 = "send_1"
-    NUM_2 = "send_2"
-    NUM_3 = "send_3"
-    NUM_4 = "send_4"
-    NUM_5 = "send_5"
-    NUM_6 = "send_6"
-    NUM_7 = "send_7"
-    NUM_8 = "send_8"
-    NUM_9 = "send_9"
-    NUM_10 = "send_10"
+    NUM_0 = "0"
+    NUM_1 = "1"
+    NUM_2 = "2"
+    NUM_3 = "3"
+    NUM_4 = "4"
+    NUM_5 = "5"
+    NUM_6 = "6"
+    NUM_7 = "7"
+    NUM_8 = "8"
+    NUM_9 = "9"
+    NUM_10 = "10"
     ASPECT_1_85 = "source_aspect_1_85"
     ASPECT_1_90 = "source_aspect_1_90"
     ASPECT_16_X_9 = "source_aspect_16x9"
@@ -59,6 +74,7 @@ class SimpleCommands(str, Enum):
     MSG_OFF = "clear_message"
     MSG_ON = "display_message"
     NLS = "nls"
+    OFF = "power_off"
     OK = "ok"
     ON = "power_on"
     PATTERN = "pattern"
@@ -66,6 +82,7 @@ class SimpleCommands(str, Enum):
     RIGHT = "right"
     SAVE = "save"
     STBY = "standby"
+    TOGGLE = "toggle"
     UP = "up"
     ZONE = "zone"
 
@@ -95,8 +112,6 @@ class MediaPlayerDef: # pylint: disable=too-few-public-methods
     a list of simple commands.
     """
     features = [
-        media_player.Features.ON_OFF,
-        media_player.Features.TOGGLE,
         media_player.Features.SELECT_SOURCE,
     ]
     attributes = {
@@ -104,7 +119,7 @@ class MediaPlayerDef: # pylint: disable=too-few-public-methods
         media_player.Attributes.SOURCE: "",
         media_player.Attributes.SOURCE_LIST: [],
     }
-    simple_commands = [cmd.display_name for cmd in SimpleCommands]
+    simple_commands = []
 
 
 class RemoteDef: # pylint: disable=too-few-public-methods
@@ -114,7 +129,6 @@ class RemoteDef: # pylint: disable=too-few-public-methods
     """
     features = [
         remote.Features.ON_OFF,
-        remote.Features.TOGGLE,
     ]
     attributes = {
         remote.Attributes.STATE: remote.States.UNKNOWN

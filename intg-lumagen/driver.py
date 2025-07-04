@@ -7,18 +7,20 @@ from typing import Any
 import config
 import ucapi
 from api import api, loop
-from lumagen import Events, LumagenDevice, LumagenInfo
+from const import EntityPrefix
+from device import Events, LumagenDevice, LumagenInfo
 from media_player import LumagenMediaPlayer
 from registry import (all_devices, clear_devices, connect_all, disconnect_all,
                       get_device, register_device, unregister_device)
 from remote import REMOTE_STATE_MAPPING, LumagenRemote
+from sensor import LumagenSensor
 from setup_flow import driver_setup_handler
 from ucapi.media_player import Attributes as MediaAttr
 from ucapi.media_player import States
+from ucapi.sensor import Attributes as SensorAttr
 from utils import setup_logger
 
 _LOG = logging.getLogger("driver")
-
 
 
 @api.listens_to(ucapi.Events.CONNECT)
@@ -71,23 +73,133 @@ async def on_subscribe_entities(entity_ids: list[str]) -> None:
     """
     _LOG.debug("Subscribe entities event: %s", entity_ids)
 
+    if not entity_ids:
+        return
+
+    # Assume all entities share the same device
+    first_entity = api.configured_entities.get(entity_ids[0])
+    if not first_entity:
+        _LOG.error("First entity %s not found in configured_entities", entity_ids[0])
+        return
+
+    device_id = config.extract_device_id(first_entity)
+    device = get_device(device_id)
+
+    if not device:
+        fallback_device = config.devices.get(device_id)
+        if fallback_device:
+            _configure_new_lumagen(fallback_device, connect=True)
+        else:
+            _LOG.error("Failed to subscribe entities: no Lumagen configuration found for %s", device_id)
+        return
+
     for entity_id in entity_ids:
+        _LOG.debug("entity id = %s", entity_id)
         entity = api.configured_entities.get(entity_id)
         if not entity:
             continue
 
-        device_id = config.extract_device_id(entity)
-        device = get_device(device_id)
+        # Handle Lumagen Sensor entities
+        if isinstance(entity, LumagenSensor):
+            _LOG.info("Setting initial state of Lumagen Sensor %s", entity_id)
 
-        if device:
-            _update_entity_attributes(entity_id, entity, device.attributes)
+            if entity_id.startswith(EntityPrefix.CURRENT_SOURCE_CONTENT_ASPECT.value):
+                value = ""
+                if device.device_info:
+                    value = device.device_info.current_source_content_aspect
+                api.configured_entities.update_attributes(
+                    entity_id,
+                    {
+                        SensorAttr.STATE: States.ON,
+                        SensorAttr.VALUE: value,
+                        SensorAttr.UNIT: ""
+                    }
+                )
+            elif entity_id.startswith(EntityPrefix.DETECTED_SOURCE_ASPECT.value):
+                value = ""
+                if device.device_info:
+                    value = device.device_info.detected_source_aspect
+                api.configured_entities.update_attributes(
+                    entity_id,
+                    {
+                        SensorAttr.STATE: States.ON,
+                        SensorAttr.VALUE: value,
+                        SensorAttr.UNIT: ""
+                    }
+                )
+            elif entity_id.startswith(EntityPrefix.INPUT_FORMAT.value):
+                api.configured_entities.update_attributes(
+                    entity_id,
+                    {
+                        SensorAttr.STATE: States.ON,
+                        SensorAttr.VALUE: "HDR",
+                        SensorAttr.UNIT: ""
+                    }
+                )
+            elif entity_id.startswith(EntityPrefix.INPUT_MODE.value):
+                api.configured_entities.update_attributes(
+                    entity_id,
+                    {
+                        SensorAttr.STATE: States.ON,
+                        SensorAttr.VALUE: "1920x1080i",
+                        SensorAttr.UNIT: ""
+                    }
+                )
+            elif entity_id.startswith(EntityPrefix.INPUT_RATE.value):
+                api.configured_entities.update_attributes(
+                    entity_id,
+                    {
+                        SensorAttr.STATE: States.ON,
+                        SensorAttr.VALUE: "60",
+                        SensorAttr.UNIT: "Hz"
+                    }
+                )
+            elif entity_id.startswith(EntityPrefix.OUTPUT_FORMAT.value):
+                api.configured_entities.update_attributes(
+                    entity_id,
+                    {
+                        SensorAttr.STATE: States.ON,
+                        SensorAttr.VALUE: "422-REC709",
+                        SensorAttr.UNIT: ""
+                    }
+                )
+            elif entity_id.startswith(EntityPrefix.OUTPUT_MODE.value):
+                api.configured_entities.update_attributes(
+                    entity_id,
+                    {
+                        SensorAttr.STATE: States.ON,
+                        SensorAttr.VALUE: "3840x2160p",
+                        SensorAttr.UNIT: ""
+                    }
+                )
+            elif entity_id.startswith(EntityPrefix.OUTPUT_RATE.value):
+                api.configured_entities.update_attributes(
+                    entity_id,
+                    {
+                        SensorAttr.STATE: States.ON,
+                        SensorAttr.VALUE: "59.94Hz-2D",
+                        SensorAttr.UNIT: "Hz"
+                    }
+                )
+            elif entity_id.startswith(EntityPrefix.PHYSICAL_INPUT_SELECTED.value):
+                value = ""
+                if device.device_info:
+                    value = device.device_info.physical_input_selected
+                api.configured_entities.update_attributes(
+                    entity_id,
+                    {
+                        SensorAttr.STATE: States.ON,
+                        SensorAttr.VALUE: f"Input: {value}",
+                        SensorAttr.UNIT: ""
+                    }
+                )
+
+            current_value = entity.attributes.get(SensorAttr.VALUE, "unknown")
+            _LOG.info("Updated Lumagen Sensor entity %s with value %s", entity_id, current_value)
             continue
 
-        device = config.devices.get(device_id)
-        if device:
-            _configure_new_lumagen(device, connect=True)
-        else:
-            _LOG.error("Failed to subscribe entity %s: no Lumagen configuration found", entity_id)
+        # Handle media_player or remote entities
+        _update_entity_attributes(entity_id, entity, device.attributes)
 
 
 def _update_entity_attributes(entity_id: str, entity, attributes: dict):
@@ -147,7 +259,9 @@ def _configure_new_lumagen(info: LumagenInfo, connect: bool = False) -> None:
     :param info: The Lumagen device configuration.
     :param connect: Whether to initiate connection immediately.
     """
+    
     device = get_device(info.id)
+    
     if device:
         device.disconnect()
     else:
@@ -158,6 +272,7 @@ def _configure_new_lumagen(info: LumagenInfo, connect: bool = False) -> None:
         device.events.on(Events.UPDATE.name, on_lumagen_update)
 
         register_device(info.id, device)
+        _LOG.debug("Registered device: %s", device)
 
     if connect:
         loop.create_task(device.connect())
@@ -178,6 +293,23 @@ def _register_available_entities(info: LumagenInfo, device: LumagenDevice) -> No
             api.available_entities.remove(entity.id)
         api.available_entities.add(entity)
 
+    for sensor in [
+        EntityPrefix.CURRENT_SOURCE_CONTENT_ASPECT,
+        EntityPrefix.DETECTED_SOURCE_ASPECT,
+        EntityPrefix.INPUT_FORMAT,
+        EntityPrefix.INPUT_MODE,
+        EntityPrefix.INPUT_RATE,
+        EntityPrefix.OUTPUT_FORMAT,
+        EntityPrefix.OUTPUT_MODE,
+        EntityPrefix.OUTPUT_RATE,
+        EntityPrefix.PHYSICAL_INPUT_SELECTED,
+    ]:
+        entity = LumagenSensor(info, sensor.value)
+
+        if api.available_entities.contains(entity.id):
+            api.available_entities.remove(entity.id)
+
+        api.available_entities.add(entity)
 
 async def on_lumagen_connected(device_id: str):
     """Handle Lumagen connection."""
@@ -198,10 +330,13 @@ async def on_lumagen_disconnected(device_id: str):
         _LOG.warning("Lumagen %s is not configured", device_id)
         return
 
+    device = get_device(device_id)
+    _LOG.debug(device)
+
     await api.set_device_state(ucapi.DeviceStates.DISCONNECTED)
 
 
-async def on_lumagen_update(device_id: str, update: dict[str, Any] | None) -> None:
+async def on_lumagen_update(entity_id: str, update: dict[str, Any] | None) -> None:
     """
     Update attributes of configured media-player or remote entity if device attributes changed.
 
@@ -211,22 +346,25 @@ async def on_lumagen_update(device_id: str, update: dict[str, Any] | None) -> No
     if update is None:
         return
 
+    device_id = entity_id.split(".", 1)[1]
     device = get_device(device_id)
     if device is None:
         return
 
-    _LOG.debug("[%s] Lumagen update: %s", device_id, update)
+    _LOG.debug("[%s] Update............: %s", entity_id, update)
 
-    for suffix, cls in [("media_player", LumagenMediaPlayer), ("remote", LumagenRemote)]:
-        entity_id = f"{suffix}.{device_id}"
-        entity: LumagenMediaPlayer | LumagenRemote | None = api.configured_entities.get(entity_id)
+    entity: LumagenMediaPlayer | LumagenRemote | None = api.configured_entities.get(entity_id)
+    if entity is None:
+        _LOG.debug("Entity %s not found", entity_id)
+        return
 
-        if not isinstance(entity, cls):
-            continue
-
-        changed_attrs = entity.filter_changed_attributes(update)
-        if changed_attrs:
-            api.configured_entities.update_attributes(entity_id, changed_attrs)
+    changed_attrs = entity.filter_changed_attributes(update)
+    if changed_attrs:
+        _LOG.debug("Changed Attrs: %s, %s", entity_id, changed_attrs)
+        api_update_attributes = api.configured_entities.update_attributes(entity_id, changed_attrs)
+        _LOG.debug("api_update_attributes = %s", api_update_attributes)
+    else:
+        _LOG.debug("attributes not changed")
 
 
 def on_device_added(device: LumagenInfo) -> None:
@@ -279,8 +417,8 @@ async def main():
     await api.init("driver.json", driver_setup_handler)
 
     config.devices = config.Devices(api.config_dir_path, on_device_added, on_device_removed)
-    for device in config.devices:
-        _configure_new_lumagen(device, connect=False)
+    for dv_info in config.devices:
+        _configure_new_lumagen(dv_info, connect=False)
 
 
 if __name__ == "__main__":

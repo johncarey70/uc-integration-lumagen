@@ -9,10 +9,9 @@ import logging
 from typing import Any
 
 from const import MediaPlayerDef, SimpleCommands
-from lumagen import LumagenDevice, LumagenInfo
+from device import LumagenDevice, LumagenInfo
 from ucapi import MediaPlayer, StatusCodes
-from ucapi.media_player import (Attributes, Commands, DeviceClasses, Options,
-                                States)
+from ucapi.media_player import Attributes, Commands, DeviceClasses, States
 
 _LOG = logging.getLogger(__name__)
 
@@ -28,11 +27,11 @@ class LumagenMediaPlayer(MediaPlayer):
         self.simple_commands = [*SimpleCommands]
 
         options = {
-            Options.SIMPLE_COMMANDS: self.simple_commands
+            #Options.SIMPLE_COMMANDS: self.simple_commands
         }
         super().__init__(
             entity_id,
-            f"Intg-{mp_info.name}",
+            f"{mp_info.name} Media Player",
             features,
             attributes,
             device_class=DeviceClasses.RECEIVER,
@@ -59,12 +58,6 @@ class LumagenMediaPlayer(MediaPlayer):
             return StatusCodes.NOT_IMPLEMENTED
 
         match cmd:
-            case Commands.ON:
-                res = await self._device.power_on()
-            case Commands.OFF:
-                res = await self._device.power_off()
-            case Commands.TOGGLE:
-                res = await self._device.power_toggle()
             case Commands.SELECT_SOURCE:
                 res = await self._device.select_source(params.get("source"))
             case _:

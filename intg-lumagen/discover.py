@@ -9,7 +9,7 @@ import asyncio
 import logging
 import socket
 
-from lumagen import LumagenDevice
+from device import LumagenDevice
 
 _LOG = logging.getLogger(__name__)
 

@@ -42,7 +42,7 @@ echo "Working in local temp dir: $TMPDIR"
 
 # Copy necessary files only
 cp -R "$INTG_DIR" "$TMPDIR/"
-cp driver.json requirements.txt "$TMPDIR/"
+cp driver.json requirements.txt assets/lumagen.png "$TMPDIR/"
 WHEEL_FILE=$(ls pylumagen-*.whl 2>/dev/null | head -n 1 || true)
 if [[ -z "$WHEEL_FILE" ]]; then
   echo "Error: pylumagen wheel file not found."
@@ -56,7 +56,7 @@ pushd "$TMPDIR" > /dev/null
 docker run --rm --name builder \
   --user=$(id -u):$(id -g) \
   -v "$TMPDIR":/workspace \
-  docker.io/unfoldedcircle/r2-pyinstaller:3.11.6-0.2.0 \
+  docker.io/unfoldedcircle/r2-pyinstaller:3.11.12 \
   bash -c "cd /workspace && \
     python -m pip install $WHEEL_FILE && \
     python -m pip install -q --disable-pip-version-check -r requirements.txt && \
@@ -67,6 +67,7 @@ mkdir -p "$STAGING_DIR/bin"
 mv dist/"$INTG_DIR"/* "$STAGING_DIR/bin/"
 mv "$STAGING_DIR/bin/$INTG_DIR" "$STAGING_DIR/bin/driver"
 cp driver.json "$STAGING_DIR/"
+cp lumagen.png "$STAGING_DIR/"
 tar czf "$ARCHIVE_NAME" -C "$STAGING_DIR" .
 
 # Copy archive back

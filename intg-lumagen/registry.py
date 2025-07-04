@@ -6,7 +6,7 @@ Used to store and retrieve device connections by device ID.
 
 from typing import Dict, Iterator
 
-from lumagen import LumagenDevice
+from device import LumagenDevice
 
 _configured_lumagens: Dict[str, LumagenDevice] = {}
 
@@ -32,6 +32,7 @@ def register_device(device_id: str, device: LumagenDevice) -> None:
         device_id: Unique identifier for the Lumagen device.
         device: LumagenDevice instance to associate with the device.
     """
+
     if device_id not in _configured_lumagens:
         _configured_lumagens[device_id] = device
 

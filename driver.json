@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "min_core_api": "0.20.0",
   "name": { "en": "Lumagen Radiance Pro" },
-  "icon": "uc:integration",
+  "icon": "custom:lumagen.png",
   "description": {
     "en": "Integration to control a Lumagen Radiance Pro connected via IP2SL."
   },

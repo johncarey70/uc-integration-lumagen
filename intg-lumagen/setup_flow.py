@@ -10,8 +10,8 @@ import logging
 import config
 import ucapi
 from api import api
+from device import LumagenDevice
 from discover import ITACH_PORT, discover_itach_devices
-from lumagen import LumagenDevice
 from registry import clear_devices
 
 _LOG = logging.getLogger(__name__)

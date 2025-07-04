@@ -23,7 +23,7 @@ from json import JSONDecodeError
 from typing import Iterator
 
 import ucapi
-from lumagen import LumagenInfo
+from device import LumagenInfo
 
 _LOG = logging.getLogger(__name__)
 
