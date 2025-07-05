@@ -30,9 +30,9 @@ def setup_logger():
     logging.getLogger("discover").setLevel(level)
     logging.getLogger("setup_flow").setLevel(level)
     logging.getLogger("device").setLevel(level)
-    #logging.getLogger("remote").setLevel(level)
-    #logging.getLogger("media_player").setLevel(level)
-    #logging.getLogger("sensor").setLevel(level)
+    logging.getLogger("remote").setLevel(level)
+    logging.getLogger("media_player").setLevel(level)
+    logging.getLogger("sensor").setLevel(level)
     logging.getLogger("pylumagen").setLevel(level)
 
 

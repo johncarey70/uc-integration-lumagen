@@ -259,9 +259,9 @@ def _configure_new_lumagen(info: LumagenInfo, connect: bool = False) -> None:
     :param info: The Lumagen device configuration.
     :param connect: Whether to initiate connection immediately.
     """
-    
+
     device = get_device(info.id)
-    
+
     if device:
         device.disconnect()
     else:

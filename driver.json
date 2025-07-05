@@ -1,6 +1,6 @@
 {
   "driver_id": "lumagen",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "min_core_api": "0.20.0",
   "name": { "en": "Lumagen Radiance Pro" },
   "icon": "custom:lumagen.png",

@@ -11,7 +11,7 @@ from typing import Any
 import ucapi
 from const import EntityPrefix
 from pyee.asyncio import AsyncIOEventEmitter
-from pylumagen.lumagen import DeviceInfo, DeviceManager, CommandExecutor
+from pylumagen.lumagen import DeviceInfo, DeviceManager
 from pylumagen.models.constants import ConnectionStatus, EventType
 from ucapi import StatusCodes
 from ucapi.media_player import Attributes as MediaAttr
@@ -224,10 +224,6 @@ class LumagenDevice:
         entity_id = f"{prefix}.{self.device_id}"
         self.events.emit(Events.UPDATE.name, entity_id, {attr: value})
 
-    # @property
-    # def executor(self) -> CommandExecutor:
-    #     """Return the command executor."""
-    #     return self.context.connection.executor
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -238,11 +234,6 @@ class LumagenDevice:
     def is_on(self) -> bool:
         """Return whether device is powered on."""
         return self.current_status == PowerStateEnum.ACTIVE
-
-    # @property
-    # def is_connected(self) -> bool:
-    #     """Return whether device is connected."""
-    #     return self.device.is_connected
 
     @property
     def is_alive(self) -> bool:
@@ -282,16 +273,8 @@ class LumagenDevice:
             _LOG.debug("Already connected to Lumagen at %s:%d", self.host, self.port)
             return True
 
-        #self.events.emit(Events.CONNECTING.name, self.device_id)
-
         try:
             await asyncio.wait_for(self.device.open(host=self.host, port=self.port), timeout=10)
-
-            #if not self.discovery:
-                #validate_simple_commands_exist_on_executor(SimpleCommands, self.executor, _LOG)
-
-                #_LOG.debug("Fetching labels after connection...")
-                #await self.device.executor.get_labels(get_all=False)
 
         except (OSError, ConnectionError, asyncio.exceptions.TimeoutError) as e:
             _LOG.error("Failed to connect to Lumagen at %s:%d - %s", self.host, self.port, e)
