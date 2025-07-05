@@ -164,8 +164,22 @@ class LumagenRemote(Remote):
                     if not simple_cmd:
                         _LOG.warning("Missing command in SEND_CMD")
                         status = StatusCodes.BAD_REQUEST
-                    elif simple_cmd in cmds.__members__:
-                        actual_cmd = cmds[simple_cmd].value
+                    else:
+                        command_enum = None
+
+                    # First: try direct enum name match (e.g. "LEFT")
+                    if simple_cmd in cmds.__members__:
+                        command_enum = cmds[simple_cmd]
+
+                    else:
+                        # Second: try display_name match (e.g. "1.85", "4x3")
+                        for cmd in cmds:
+                            if cmd.display_name == simple_cmd:
+                                command_enum = cmd
+                                break
+
+                    if command_enum:
+                        actual_cmd = command_enum.value
                         cmd_params = None
 
                         if actual_cmd.isdigit() and 0 <= int(actual_cmd) <= 10:
