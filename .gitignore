@@ -26,3 +26,6 @@ build/
 # Project-specific
 config.json
 .old/
+scripts/*
+Makefile
+assets/

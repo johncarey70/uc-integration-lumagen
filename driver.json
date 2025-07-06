@@ -1,8 +1,10 @@
 {
   "driver_id": "lumagen",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "min_core_api": "0.20.0",
-  "name": { "en": "Lumagen Radiance Pro" },
+  "name": {
+    "en": "Lumagen Radiance Pro"
+  },
   "icon": "custom:lumagen.png",
   "description": {
     "en": "Integration to control a Lumagen Radiance Pro connected via IP2SL."
@@ -25,12 +27,15 @@
         "label": {
           "en": "Notes"
         },
-        "field": { "label": { "value": {
-            "en": "By clicking on next an attempt is made to automatically find the Global Caché iTach IP2SL device connected to the Lumagen in your local network.\nIf you have changed any default ports or are using a different device you need to activate the manual setup."
-            } }
+        "field": {
+          "label": {
+            "value": {
+              "en": "By clicking on next an attempt is made to automatically find the Global Cach\u00e9 iTach IP2SL device connected to the Lumagen in your local network.\nIf you have changed any default ports or are using a different device you need to activate the manual setup."
+            }
+          }
         }
       },
-      {  
+      {
         "id": "manual",
         "label": {
           "en": "Manual Setup"
@@ -38,7 +43,7 @@
         "field": {
           "checkbox": {
             "value": false
-            }
+          }
         }
       }
     ]
