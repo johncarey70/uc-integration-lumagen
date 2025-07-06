@@ -25,6 +25,17 @@ Supported **remote** UI:
 - Source aspect ratio presets
 - Memory banks and configuration commands
 
+Sensors:
+
+- current_source_content_aspect
+- detected_source_aspect
+- input_format
+- input_mode
+- input_rate
+- output_format
+- output_mode
+- output_rate
+- physical_input_selected
 
 ## Lumagen Device Configuration Prerequisites
 
@@ -51,7 +62,7 @@ Upload in the Web Configurator
 Go to Integrations in the top menu. On the top right click on Add new/Install custom and choose the downloaded tar.gz file.
 
 #### 3 - Configuration
-Click on the Integration to run setup. The player should be found automatically, if not use the manual setup.
+Click on the Integration to run setup. The Global Caché IP2SL device with a connected Lumagen should be found automatically, if not use the manual setup.
 
 #### 4 - Updating
 First remove the existing version by clicking the delete icon on the integration, this needs to be done twice. The first time deletes the configuration, the second time fully removes it. Then repeat the above steps.
