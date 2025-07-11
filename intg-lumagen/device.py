@@ -356,7 +356,7 @@ class LumagenDevice:
             _LOG.warning("Invalid source: %s", source)
             return StatusCodes.BAD_REQUEST
         try:
-            index = self.source_list.index(source)
+            index = self.source_list.index(source) + 1
             await self.device.executor.input(index)
             _LOG.info("Sent source select command for input %02d", index)
             return StatusCodes.OK
