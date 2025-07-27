@@ -33,7 +33,7 @@ def setup_logger():
     logging.getLogger("remote").setLevel(level)
     logging.getLogger("media_player").setLevel(level)
     logging.getLogger("sensor").setLevel(level)
-    logging.getLogger("pylumagen").setLevel(level)
+    #logging.getLogger("pylumagen").setLevel(level)
 
 
 

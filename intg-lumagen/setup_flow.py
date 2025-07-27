@@ -17,7 +17,6 @@ from registry import clear_devices
 _LOG = logging.getLogger(__name__)
 
 
-
 def _basic_input_form(ip: str = "", port: int = ITACH_PORT) -> ucapi.RequestUserInput:
     """
     Returns a form for manual configuration of IP and port.

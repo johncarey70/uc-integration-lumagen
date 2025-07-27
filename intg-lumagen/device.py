@@ -77,6 +77,7 @@ class LumagenDevice:
 
         # Event loop and internal connection state
         self._event_loop = loop or asyncio.get_running_loop()
+        self._reconnect_task: asyncio.Task | None = None
         self._connected: bool = False
         self._disconnecting: bool = False
         self._is_alive: bool = False
@@ -185,6 +186,11 @@ class LumagenDevice:
             self._attr_state = States.UNAVAILABLE
             self.events.emit(Events.DISCONNECTED.name, self.device_id)
 
+            # Prevent reconnect if we explicitly called disconnect
+            if not self._disconnecting:
+                if self._reconnect_task is None or self._reconnect_task.done():
+                    self._reconnect_task = asyncio.create_task(self._reconnect_loop())
+
         elif state == ConnectionStatus.CONNECTED:
             label = "IP2SL device" if self.discovery else "Lumagen"
             _LOG.info("Connected to %s at %s:%d", label, self.host, self.port)
@@ -268,10 +274,13 @@ class LumagenDevice:
         return updated_data
 
     async def connect(self) -> bool:
-        """Connect to the Lumagen device."""
+        """Establish a connection to the Lumagen device with retry logic."""
+        _LOG.debug("Connecting to Lumagen Device")
+
         if self._connected:
-            _LOG.debug("Already connected to Lumagen at %s:%d", self.host, self.port)
-            return True
+            _LOG.debug("Already connected disconnecting first")
+            await self.disconnect()
+
 
         try:
             await asyncio.wait_for(self.device.open(host=self.host, port=self.port), timeout=10)
@@ -282,13 +291,33 @@ class LumagenDevice:
 
         return True
 
+    async def _reconnect_loop(self, delay: float = 10.0):
+        """Try to reconnect to the device in a loop."""
+        _LOG.info("Starting reconnect loop to Lumagen at %s:%d", self.host, self.port)
+        self._attr_state = States.UNAVAILABLE
+
+        while not self._connected:
+            try:
+                success = await self.connect()
+                if success:
+                    _LOG.info("Reconnected to Lumagen at %s:%d", self.host, self.port)
+                    break
+            except Exception as e:
+                _LOG.warning("Reconnect failed: %s", e)
+
+            await asyncio.sleep(delay)
+
+        self._reconnect_task = None
+
     async def disconnect(self):
         """Disconnect from the Lumagen device."""
-
         if self._connected:
+            self._disconnecting = True  # prevent reconnect loop
             label = "IP2SL device" if self.discovery else "Lumagen"
-            _LOG.debug("Disconnecting from %s at %s:%d",label, self.host, self.port)
+            _LOG.debug("Disconnecting from %s at %s:%d", label, self.host, self.port)
             await self.device.close()
+            self._connected = False
+            self._disconnecting = False  # reset for future reconnects
 
     async def send_command(self, command: str, parms = "") -> StatusCodes:
         """Send a named command to the device executor."""
